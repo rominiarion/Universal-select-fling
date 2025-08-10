@@ -1,0 +1,194 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local Character
+local HumanoidRootPart
+
+local function updateCharacter()
+	Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end
+
+updateCharacter()
+LocalPlayer.CharacterAdded:Connect(updateCharacter)
+
+-- GUI
+local gui = Instance.new("ScreenGui", PlayerGui)
+gui.Name = "TxeenFlight"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 400)
+frame.Position = UDim2.new(0.5, -150, 0.5, -200)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Visible = false
+frame.Active = true
+frame.Draggable = true
+
+local titleBar = Instance.new("Frame", frame)
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+local titleText = Instance.new("TextLabel", titleBar)
+titleText.Size = UDim2.new(1, 0, 1, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Txeen-Flight"
+titleText.Font = Enum.Font.GothamSemibold
+titleText.TextSize = 20
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Position = UDim2.new(0, 10, 0, 40)
+scroll.Size = UDim2.new(1, -20, 1, -100)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 6
+
+local startBtn = Instance.new("TextButton", frame)
+startBtn.Size = UDim2.new(0.8, 0, 0, 40)
+startBtn.Position = UDim2.new(0.1, 0, 1, -50)
+startBtn.Text = "Başlat"
+startBtn.Font = Enum.Font.GothamBold
+startBtn.TextSize = 18
+startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+startBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+startBtn.BorderSizePixel = 0
+
+frame.Visible = true
+frame.Size = UDim2.new(0, 0, 0, 0)
+frame:TweenSize(UDim2.new(0, 300, 0, 400), "Out", "Quad", 0.5, true)
+
+local selectedPlayers = {}
+
+local function updatePlayerList()
+	scroll:ClearAllChildren()
+	selectedPlayers = {}
+	local y = 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			local btn = Instance.new("TextButton", scroll)
+			btn.Size = UDim2.new(1, -10, 0, 30)
+			btn.Position = UDim2.new(0, 5, 0, y)
+			btn.Text = player.Name
+			btn.Font = Enum.Font.Gotham
+			btn.TextSize = 16
+			btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+			btn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+			btn.BorderSizePixel = 0
+
+			btn.MouseButton1Click:Connect(function()
+				if not table.find(selectedPlayers, player) then
+					table.insert(selectedPlayers, player)
+					btn.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+				else
+					table.remove(selectedPlayers, table.find(selectedPlayers, player))
+					btn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+				end
+			end)
+
+			y += 35
+		end
+	end
+	scroll.CanvasSize = UDim2.new(0, 0, 0, y)
+end
+
+updatePlayerList()
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+
+-- Detection Decal
+if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
+	local detection = Instance.new("Decal")
+	detection.Name = "juisdfj0i32i0eidsuf0iok"
+	detection.Parent = ReplicatedStorage
+end
+
+-- fling
+local flingActive = false
+local function fling()
+	flingActive = true
+	local movel = 0.1
+	while flingActive do
+		RunService.Heartbeat:Wait()
+		local c = LocalPlayer.Character
+		local hrp = c and c:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			local vel = hrp.Velocity
+			hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+			RunService.RenderStepped:Wait()
+			hrp.Velocity = vel
+			RunService.Stepped:Wait()
+			hrp.Velocity = vel + Vector3.new(0, movel, 0)
+			movel = -movel
+		end
+	end
+end
+
+-- noclip
+local noclipConn
+local function enableNoclip()
+	noclipConn = RunService.Stepped:Connect(function()
+		local char = LocalPlayer.Character
+		if char then
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+	end)
+end
+
+local function disableNoclip()
+	if noclipConn then
+		noclipConn:Disconnect()
+	end
+end
+
+-- Başlat Butonu
+startBtn.MouseButton1Click:Connect(function()
+	if not frame.Visible or not startBtn.Active then return end
+
+	local originalText = startBtn.Text
+	startBtn.Active = false
+
+	local originalPos = HumanoidRootPart.Position
+	coroutine.wrap(fling)()
+	enableNoclip()
+
+	for _, targetPlayer in ipairs(selectedPlayers) do
+		local targetChar = targetPlayer.Character
+		if targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
+			local targetHRP = targetChar.HumanoidRootPart
+
+			local startTime = tick()
+			while tick() - startTime < 3 do
+				local t = tick() - startTime
+				local zOffset = math.sin(t * 4) * 2
+				HumanoidRootPart.CFrame = targetHRP.CFrame
+					* CFrame.new(0, 0, zOffset)
+					* CFrame.Angles(0, math.rad(t * 120), 0)
+				wait(0.05)
+			end
+		end
+	end
+
+	flingActive = false
+	disableNoclip()
+	HumanoidRootPart.CFrame = CFrame.new(originalPos)
+
+	local waitTime = #selectedPlayers * 3
+	for i = waitTime, 1, -1 do
+		startBtn.Text = "Bekle: " .. i .. "s"
+		wait(1)
+	end
+
+	startBtn.Text = originalText
+	startBtn.Active = true
+end)
