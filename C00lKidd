@@ -15,7 +15,6 @@ end
 updateCharacter()
 LocalPlayer.CharacterAdded:Connect(updateCharacter)
 
--- GUI
 local gui = Instance.new("ScreenGui", PlayerGui)
 gui.Name = "TxeenFlight"
 gui.ResetOnSpawn = false
@@ -102,14 +101,12 @@ updatePlayerList()
 Players.PlayerAdded:Connect(updatePlayerList)
 Players.PlayerRemoving:Connect(updatePlayerList)
 
--- Detection Decal
 if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 	local detection = Instance.new("Decal")
 	detection.Name = "juisdfj0i32i0eidsuf0iok"
 	detection.Parent = ReplicatedStorage
 end
 
--- fling
 local flingActive = false
 local function fling()
 	flingActive = true
